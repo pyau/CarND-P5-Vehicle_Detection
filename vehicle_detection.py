@@ -322,7 +322,7 @@ def training():
 #svc_pickle["X_scaler"] = X_scaler
 #pickle.dump(svc_pickle, open("./svc.p", "wb"))
 
-svc_pickle = pickle.load(open("./svc_32_32_32.p", "rb"))
+svc_pickle = pickle.load(open("./svc.p", "rb"))
 svc = svc_pickle["svc"]
 X_scaler = svc_pickle["X_scaler"]
 
@@ -585,7 +585,7 @@ def process_image(img):
 def process_video():
     #test_output = 'test.mp4'
     #clip = VideoFileClip("test_video.mp4")
-    test_output = 'project.mp4'
+    test_output = 'result.mp4'
     clip = VideoFileClip("project_video.mp4")#.subclip(39,43)
     test_clip = clip.fl_image(process_image)
     test_clip.write_videofile(test_output, audio=False)
