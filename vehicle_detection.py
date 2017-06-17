@@ -219,16 +219,16 @@ notcar_ind = np.random.randint(0, len(notcars))
 car_image=  mpimg.imread(cars[car_ind])
 notcar_image = mpimg.imread(notcars[notcar_ind])
 
-color_space = 'RGB'
-orient = 6
-pix_per_cell = 8
-cell_per_block = 2
-hog_channel = 0     #0,1,2,"ALL"
-spatial_size = (16,16)
-hist_bins = 16
-spatial_feat = True
-hist_feat = True
-hog_feat = True
+#color_space = 'RGB'
+#orient = 6
+#pix_per_cell = 8
+#cell_per_block = 2
+#hog_channel = 0     #0,1,2,"ALL"
+#spatial_size = (16,16)
+#hist_bins = 16
+#spatial_feat = True
+#hist_feat = True
+#hog_feat = True
 
 #------
 def extract_car_notcar_features():
