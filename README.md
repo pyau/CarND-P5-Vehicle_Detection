@@ -1,9 +1,4 @@
-##Writeup Template
-###You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
-
-**Vehicle Detection Project**
+##Vehicle Detection Project
 
 The goals / steps of this project are the following:
 
@@ -15,10 +10,11 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
+[image1]: ./output_images/image0077.png
+[image1a]: ./output_images/image14.png
+[image2]: ./output_images/img_and_hog.png
 [image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
+[image4]: ./output_images/labels.png
 [image5]: ./examples/bboxes_and_heat.png
 [image6]: ./examples/labels_map.png
 [image7]: ./examples/output_bboxes.png
@@ -38,34 +34,39 @@ You're reading it!
 
 ####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
+The code for this step is contained in in lines 18 through 38 of the file called `vehicle_detection.py`).  
 
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
 ![alt text][image1]
+![alt text][image1a]
 
-I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
+I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.  The code is in lines 40-51 in `vehicle_detection.py`.
 
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
+Here is an example using the `RGB` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(8, 8)`, `cells_per_block=(2, 2)` and `hog_channel=0`:
 
 
 ![alt text][image2]
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters and...
+I tried various combinations of parameters and found out the best parameters to use are `color_space="YCrCb"`, `orient=9`, `pixels_per_cell=(8,8)`, `cells_per_block=(2,2)`, `hog_channel=ALL`.  The test accuracy is above 99.2% when using linear SVC to train classifier.
+
+I found both HSV and YCrCb yield good test accuracy during training.  For this project, using one channel for hog_channel is only good for visualization.
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using...
+I trained a linear SVM using spatial features, color histogram features and hog features. I extract these features in lines 66-103 in `vehicle_detection.py`. First, I convert the image to the desired color space (YCrCb), then get different features from the images.
+
+The training code is in line 277-317.  Before training, I use a StandardScaler to remove mean and scale to unit variance (line 298-299). Then I apply linear svc to fit the data. 90% of data is used for training, and 10% of data for testing.
 
 ###Sliding Window Search
 
 ####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+The code for sliding window is in `find_cars()` function, lines 457- 516 in `vehicle_detection.py`.  With sliding window, Hog feature at the same pixel region will be calculated multiple times, especially with overlaps.  The method I use is to first calculate hog features for the full image, and then subsample the hog feature for each region of interest. The window size that I use is 64x64, and is divided into 8x8 cells.  Then I define each step the subsampling would move forward 2 cells.  That means my sliding window searches have 75% overlap.
 
-![alt text][image3]
+I used multiple scales to search only for videos, in lines 566-569 in `vehicle_detection.py`.  I call the `find_cars()` function with a scale variable.  The scale variable is first used to scale the image, before apply a fixed size sliding window search of size 64.  This has similar effect as using different sizes of search window.  Apply scales 1.0 and 2.0 yields good result, because cars from both near the camera and far from camera can be detected.
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
@@ -77,25 +78,19 @@ Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spat
 ### Video Implementation
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./result.mp4)
 
+Or this can be watched in youtube link below:
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=aG9QYPUj8So
+" target="_blank"><img src="https://github.com/pyau/CarND-P5-Vehicle_Detection/blob/master/video_screenshot.png?raw=true" 
+alt="Click to watch video" width="480" height="360" border="10" /></a>
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+Lines 555-563 show my solution for filtering out false positives.  I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap.  I combined the heatmap for the last 30 frames of the video, so I get a greater confidence level.  Then I apply thresholding (lines 519-521) to the heatmap to take out false positives.
 
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
-
-### Here are six frames and their corresponding heatmaps:
-
-![alt text][image5]
-
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
+Then I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
 
 
 ---
@@ -104,5 +99,11 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+In around 41st second of the video with more trees and shadows, there are a lot of false positives if I don't use the filtering that I described above.  The result video does not have any false positive present, after tuning thresholding and other parameters for a while.
 
+The white car in the video was not detected for a short period of time, when it was farther away from the camera.  In general, the detection of the white car is not very robust.  I think more positive training data is required to make the detection more robust in this case.
+
+I also combined result from the advanced lane finding project with vehicle detection.  The result video can be seen below.  My bounding boxes around vehicle is not very tight.  Further tuning of the threshold parameter, and filtering parameters should improve the performance.
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=EaG2X9x1B9w
+" target="_blank">Link to combined result video</a>
